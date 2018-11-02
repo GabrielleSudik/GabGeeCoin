@@ -16,14 +16,34 @@ class Block {
         this.data = data;
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
+        //the nonce is a random extra integer 
+        //that has nothing to do with the block, but
+        //can be used to increment
+        //see the mineBlock method, e.g.
+        this.nonce = 0;
     }
 
     //how it gets its own hash:
     calculateHash() {
         return SHA256(this.index + this.previousHash + this.timestamp
-            + JSON.stringify(this.data)).toString();
+            + JSON.stringify(this.data) + this.nonce).toString();
+    }
+
+    //proof-of-work method, so blocks can't be created too quickly
+    //all together our code requires that each created hash have
+    //[difficulty] number of 0s at the beginning
+    //the more zeros, the longer the calculations take
+    mineBlock(difficulty){
+        while(this.hash.substring(0, difficulty) !== Array(difficulty+1).join("0")){
+            this.nonce++;
+            this.hash = this.calculateHash();
+        }
+
+        console.log("Block mined: " + this.hash);
     }
 }
+
+
 
 class Blockchain{
     constructor(){
@@ -31,6 +51,9 @@ class Blockchain{
         //if you didn't create the first block manually
         //this could be empty
         //instead, you initialize this array with the first block in it.
+        this.difficulty = 4;
+        //we set difficulty as a variable that will tell
+        //mineBlock how hard to make the puzzle
     }
 
     //first block is called Genesis Block
@@ -53,7 +76,8 @@ class Blockchain{
         //set the previosHash, which is the current hash of the last block"
         newBlock.previousHash = this.getLatestBlock().hash;
         //calc the hash for the new block:
-        newBlock.hash = newBlock.calculateHash();
+        //newBlock.hash = newBlock.calculateHash();
+        newBlock.mineBlock(this.difficulty);
         //add the new block to the chain:
         this.chain.push(newBlock);
     }
@@ -85,23 +109,25 @@ class Blockchain{
 //let's test by creating an instance:
 
 let gabGeeCoin = new Blockchain();
+console.log("Mining block 1...");
 gabGeeCoin.addBlock(new Block(1, "10/25/2018", {amount: 5}));
+console.log("Mining block 2...");
 gabGeeCoin.addBlock(new Block(2, "10/28/2018", {amount: 8}));
 
 //second test of code: run the validity method
-console.log('Is blockchain valid? ' + gabGeeCoin.isChainValid());  //true
+//console.log('Is blockchain valid? ' + gabGeeCoin.isChainValid());  //true
 
 //let's tamper with block 2 and see what happens.
 //just manually change the data part
-gabGeeCoin.chain[1].data = {amount: 100};
+//gabGeeCoin.chain[1].data = {amount: 100};
 
-console.log('Is blockchain valid? ' + gabGeeCoin.isChainValid());  //false
+//console.log('Is blockchain valid? ' + gabGeeCoin.isChainValid());  //false
 
 //what if you also try to change a hash during the tamper?
-gabGeeCoin.chain[1].data = {amount: 50};
-gabGeeCoin.chain[1].hash = gabGeeCoin.chain[1].calculateHash();
+//gabGeeCoin.chain[1].data = {amount: 50};
+//gabGeeCoin.chain[1].hash = gabGeeCoin.chain[1].calculateHash();
 
-console.log('Is blockchain valid? ' + gabGeeCoin.isChainValid());  //false
+//console.log('Is blockchain valid? ' + gabGeeCoin.isChainValid());  //false
 //still false because the "new" hash doesn't match the subsequent block's previous hash.
 
 //first test of code: see if the chain creates properly:
