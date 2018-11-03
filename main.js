@@ -7,13 +7,22 @@
 const SHA256 = require('crypto-js/sha256');
 //gab! sha256 or sha256.js?
 
+//lesson 3: adding transactions, not just data
+class Transaction{
+    constructor(fromAddress, toAddress, amount){
+        this.fromAddress = fromAddress;
+        this.toAddress = toAddress;
+        this.amount = amount;
+    }
+}
+
 //the basic block:
 class Block {
     //what's in it:
-    constructor(index, timestamp, data, previousHash = '') {
-        this.index = index;
+    constructor(index, timestamp, transactions, previousHash = '') {
+        //this.index = index;
         this.timestamp = timestamp;
-        this.data = data;
+        this.transactions = transactions; //was previous data. expanded to transactions in lesson 3.
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
         //the nonce is a random extra integer 
@@ -26,7 +35,7 @@ class Block {
     //how it gets its own hash:
     calculateHash() {
         return SHA256(this.index + this.previousHash + this.timestamp
-            + JSON.stringify(this.data) + this.nonce).toString();
+            + JSON.stringify(this.transactions) + this.nonce).toString();
     }
 
     //proof-of-work method, so blocks can't be created too quickly
@@ -60,7 +69,7 @@ class Blockchain{
     //it must be created manually
     //here's a method to do that:
     createGenesisBlock(){
-        return new Block(0, "01/01/2018", "Genesis Block data here.", "0");
+        return new Block(/*0,*/ "01/01/2018", "Genesis Block data here.", "0");
         //see how this is creating one instance of your class Block?
     }
 
@@ -109,10 +118,12 @@ class Blockchain{
 //let's test by creating an instance:
 
 let gabGeeCoin = new Blockchain();
+/*
 console.log("Mining block 1...");
 gabGeeCoin.addBlock(new Block(1, "10/25/2018", {amount: 5}));
 console.log("Mining block 2...");
 gabGeeCoin.addBlock(new Block(2, "10/28/2018", {amount: 8}));
+*/
 
 //second test of code: run the validity method
 //console.log('Is blockchain valid? ' + gabGeeCoin.isChainValid());  //true
