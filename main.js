@@ -19,7 +19,7 @@ class Transaction{
 //the basic block:
 class Block {
     //what's in it:
-    constructor(index, timestamp, transactions, previousHash = '') {
+    constructor(/*index,*/ timestamp, transactions, previousHash = '') {
         //this.index = index;
         this.timestamp = timestamp;
         this.transactions = transactions; //was previous data. expanded to transactions in lesson 3.
@@ -60,9 +60,14 @@ class Blockchain{
         //if you didn't create the first block manually
         //this could be empty
         //instead, you initialize this array with the first block in it.
-        this.difficulty = 4;
+        this.difficulty = 2;
         //we set difficulty as a variable that will tell
         //mineBlock how hard to make the puzzle
+        this.pendingTransactions = [];
+        this.miningReward = 100;
+        //those two are for the "bitcoin" work and rewards
+        //they track what work was done, and the reward 
+        //to the coder for doing the work
     }
 
     //first block is called Genesis Block
@@ -81,6 +86,9 @@ class Blockchain{
     //this method instructs the program what to do to add a new block
     //IRL it would be more complicated, with checks, etc
     //but this is fine for your first one.
+
+    //coded out and replaced with minePendingTransactions
+    /*
     addBlock(newBlock){
         //set the previosHash, which is the current hash of the last block"
         newBlock.previousHash = this.getLatestBlock().hash;
@@ -89,6 +97,53 @@ class Blockchain{
         newBlock.mineBlock(this.difficulty);
         //add the new block to the chain:
         this.chain.push(newBlock);
+    }
+    */
+
+    minePendingTransactions(miningRewardAddress){
+        //if block is successfully mined,
+        //the reward goes to that address
+        const rewardForTransactions = new Transaction(null, this.miningRewardAddress, this.miningReward);
+        this.pendingTransactions.push(rewardForTransactions);
+        let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
+        block.mineBlock(this.difficulty);
+        console.log("Block successfully mined.");
+        this.chain.push(block);
+        this.pendingTransactions = [
+            
+        ];
+        //the pendingTransaction line sends the reward from "no one"
+        //because it comes from the system, not a person. so, null.
+    }
+
+    //each block of transactions may have more than one transaction
+    //so each transaction is added to the total block's transactions.
+    createTransaction(transaction){
+        this.pendingTransactions.push(transaction);
+    }
+
+    //blockchain doesn't automatically record a balance
+    //it has to calculate balance by reviewing all records in the chain
+    getBalanceOfAddress(address){
+        let balance = 0;
+
+        //do a nested loop to look at each transaction in each block
+        //then add or substract from the balance according
+        //to whether amount was sent or received.
+        for(const block of this.chain){
+            for(const trans of block.transactions){
+                if(trans.fromAddress === address){
+                    balance -= trans.amount;
+                }
+                
+                if(trans.toAddress === address){
+                    balance += trans.amount;
+                }
+                
+            }
+        }
+
+        return balance;
     }
 
     //confirm that hashes match the way they should
@@ -144,3 +199,20 @@ gabGeeCoin.addBlock(new Block(2, "10/28/2018", {amount: 8}));
 //first test of code: see if the chain creates properly:
 //console.log(JSON.stringify(gabGeeCoin, null, 4));
 
+//testing transaction code:
+gabGeeCoin.createTransaction(new Transaction('AddressNo1', 'AddressNo2', 100));
+gabGeeCoin.createTransaction(new Transaction('AddressNo2', 'AddressNo1', 50));
+
+console.log('\nStarting the miner...');
+gabGeeCoin.minePendingTransactions('Gaby-address');
+console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress('Gaby-address'));
+
+console.log('\nStarting the miner again...');
+gabGeeCoin.minePendingTransactions('Gaby-address');
+console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress('Gaby-address'));
+
+console.log('\nStarting the miner again...');
+gabGeeCoin.minePendingTransactions('Gaby-address');
+console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress('Gaby-address'));
+
+//why am i only getting 0 as balance? :(
