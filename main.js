@@ -9,6 +9,7 @@
 
 //imports these two methods from other file:
 const {Blockchain, Transaction} = require('./blockchain');
+//tip: hover on the part in quotes, it will show you the full path
 
 //let's test by creating an instance:
 
@@ -56,3 +57,5 @@ gabGeeCoin.minePendingTransactions('Gaby-address');
 console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress('Gaby-address'));
 
 //why am i only getting 0 as balance? :(
+
+//run in console: "node main.js"
