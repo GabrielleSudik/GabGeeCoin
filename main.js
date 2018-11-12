@@ -7,7 +7,7 @@
 //used to have methods here... moved to blockchain.js
 //instead you now have:
 
-//imports these two methods from other file:
+//imports these two methods from blockchain.js:
 const {Blockchain, Transaction} = require('./blockchain');
 //tip: hover on the part in quotes, it will show you the full path
 
