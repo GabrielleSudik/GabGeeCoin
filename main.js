@@ -5,7 +5,15 @@
 //shft alt f to tidy code.
 
 //used to have methods here... moved to blockchain.js
-//instead you now have:
+//instead you now have just the main and some tests
+
+//also have the imported statements:
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');
+
+//and we want to use keys (created with "node keygenerator.js'")
+const myKey = ec.keyFromPrivate('248150ac3cc4a110acdef1f856df0fb0ce264887fe0ca2e414b9f17fca3498e2');
+const myWalletAddress = myKey.getPublic('hex');
 
 //imports these two methods from blockchain.js:
 const {Blockchain, Transaction} = require('./blockchain');
@@ -20,6 +28,18 @@ gabGeeCoin.addBlock(new Block(1, "10/25/2018", {amount: 5}));
 console.log("Mining block 2...");
 gabGeeCoin.addBlock(new Block(2, "10/28/2018", {amount: 8}));
 */
+
+//create first transaction:
+const tx1 = new Transaction(myWalletAddress, 'public key goes here', 100);
+tx1.signTransaction(myKey);
+gabGeeCoin.addTransaction(tx1);
+
+
+//second transaction
+const tx2 = new Transaction(myWalletAddress, 'public key goes here', 50);
+tx2.signTransaction(myKey);
+gabGeeCoin.addTransaction(tx2);
+
 
 //second test of code: run the validity method
 //console.log('Is blockchain valid? ' + gabGeeCoin.isChainValid());  //true
@@ -41,21 +61,32 @@ gabGeeCoin.addBlock(new Block(2, "10/28/2018", {amount: 8}));
 //console.log(JSON.stringify(gabGeeCoin, null, 4));
 
 //testing transaction code:
-gabGeeCoin.createTransaction(new Transaction('AddressNo1', 'AddressNo2', 100));
-gabGeeCoin.createTransaction(new Transaction('AddressNo2', 'AddressNo1', 50));
+//later commented out after you added the key stuff into the creation lines.
+//gabGeeCoin.createTransaction(new Transaction('AddressNo1', 'AddressNo2', 100));
+//gabGeeCoin.createTransaction(new Transaction('AddressNo2', 'AddressNo1', 50));
 
 console.log('\nStarting the miner...');
-gabGeeCoin.minePendingTransactions('Gaby-address');
-console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress('Gaby-address'));
+gabGeeCoin.minePendingTransactions(myWalletAddress);
+console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress(myWalletAddress));
 
 console.log('\nStarting the miner again...');
-gabGeeCoin.minePendingTransactions('Gaby-address');
-console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress('Gaby-address'));
+gabGeeCoin.minePendingTransactions(myWalletAddress);
+console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress(myWalletAddress));
 
 console.log('\nStarting the miner again...');
-gabGeeCoin.minePendingTransactions('Gaby-address');
-console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress('Gaby-address'));
+gabGeeCoin.minePendingTransactions(myWalletAddress);
+console.log('\nBalance of Gaby is: ', gabGeeCoin.getBalanceOfAddress(myWalletAddress));
 
-//why am i only getting 0 as balance? :(
+//i should be getting a reward and transfering some
 
 //run in console: "node main.js"
+
+console.log('Is chain valid?', gabGeeCoin.isChainValid()); //true
+
+//let's try to tamper with the second block, first transaction:
+gabGeeCoin.chain[1].transactions[0].amount = 1;
+
+console.log('Is chain valid?', gabGeeCoin.isChainValid()); //false
+//false because signatures no longer match.
+
+//I'm having trouble following the math. hmm. but it's working.

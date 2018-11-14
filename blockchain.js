@@ -13,16 +13,17 @@ class Transaction {
         this.fromAddress = fromAddress;
         this.toAddress = toAddress;
         this.amount = amount;
+        this.timestamp = Date.now();
     }
 
     //this checks the signature
     calculateHash() {
-        return SHA256(this.fromAddress + this.toAddress + this.amount).toString();
+        return SHA256(this.fromAddress + this.toAddress + this.amount + this.timestamp).toString();
     }
 
     //this allows the signing of transactions (well, their hash)
     signTransaction(signingKey) {
-        //first check to transaction authored by the owner:
+        //first check if transaction authored by the owner:
         if (signingKey.getPublic('hex') !== this.fromAddress) {
             throw new Error('You cannot sign transactions from other wallets.');
         }
@@ -69,7 +70,7 @@ class Block {
 
     //how it gets its own hash:
     calculateHash() {
-        return SHA256(this.index + this.previousHash + this.timestamp
+        return SHA256(this.previousHash + this.timestamp
             + JSON.stringify(this.transactions) + this.nonce).toString();
     }
 
@@ -78,12 +79,23 @@ class Block {
     //[difficulty] number of 0s at the beginning
     //the more zeros, the longer the calculations take
     mineBlock(difficulty) {
-        while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")) {
+        while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join('0')) {
             this.nonce++;
             this.hash = this.calculateHash();
         }
 
-        console.log("Block mined: " + this.hash);
+        console.log('Block mined: ' + this.hash);
+    }
+
+    //check that all transactions are valid by looping through them
+    hasValidTransaction(){
+        for(const tx of this.transactions){
+            if(!tx.isValid()){
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 
@@ -138,22 +150,36 @@ class Blockchain {
     minePendingTransactions(miningRewardAddress) {
         //if block is successfully mined,
         //the reward goes to that address
-        const rewardTx = new Transaction(null, this.miningRewardAddress, this.miningReward);
+        const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
         this.pendingTransactions.push(rewardTx);
         let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
         block.mineBlock(this.difficulty);
         console.log("Block successfully mined.");
         this.chain.push(block);
-        this.pendingTransactions = [
-
-        ];
+        this.pendingTransactions = [];
         //the pendingTransaction line sends the reward from "no one"
         //because it comes from the system, not a person. so, null.
     }
 
     //each block of transactions may have more than one transaction
     //so each transaction is added to the total block's transactions.
+    /*
     createTransaction(transaction) {
+        this.pendingTransactions.push(transaction);
+    }
+    */
+
+    //that last block was deleted because we won't actually be creating blocks
+    //instead they are created elsewhere and added.
+    //we'll also check that the blocks are done properly
+    addTransaction(transaction) {
+        if(!transaction.fromAddress || !transaction.toAddress){
+            throw new Error('Transaction must include a from and to address.');
+        }
+
+        if(!transaction.isValid){
+            throw new Error('Cannon add invalid transaction to the chain.');
+        }
         this.pendingTransactions.push(transaction);
     }
 
@@ -188,7 +214,12 @@ class Blockchain {
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];
 
-            //test is current hash is still valid:
+            //this code checks the current block:
+            if(!currentBlock.hasValidTransaction()){
+                return false;
+            }
+
+            //test if current hash is still valid:
             if (currentBlock.hash !== currentBlock.calculateHash()) {
                 return false;
             }
@@ -200,7 +231,7 @@ class Blockchain {
             }
         }
 
-        //if those two tests are not false, return true
+        //if those tests are not false, return true
         return true;
     }
 }
@@ -208,4 +239,5 @@ class Blockchain {
 //these lines allow the methods to be used in main:
 module.exports.Blockchain = Blockchain;
 module.exports.Transaction = Transaction;
+module.exports.Block = Block;
 //you will also import them in main
